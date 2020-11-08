@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+  <title>Crypto Currency Prices</title>
+</head>
+<body>
+  <div>
+    <input type="text" id="currencyTags">
+    <button id="requestRate">See Rate</button>
+    <div id="output1"></div>
+  </div>
+  <div>
+    <select id="selCurrency">
+      <option value="USD">USD</option>
+    </select>
+    <button id="allRates">See All</button>
+    <ul id="output"></ul>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.js"></script>
+
+  <script>
+    $(function(){
+      $.get('/load/',function(data){
+        $('#currencyTags').autocomplete({
+          source:data
+        });
+      })
+    });
+
+    const allRates = document.querySelector('#allRates');
+    const requestRate = document.querySelector('#requestRate');
+    const currencyTags = document.querySelector('#currencyTags');
+    const selCurrency = document.querySelector('#selCurrency');
+    const output1 = document.querySelector('#output1');
+    const url = 'http://discoveryvip.com/shared/json.php?f=coin';
+    const cur = ["BTC", "USDT", "BNB"];
+
+    for(var i=0;i<cur.length;i++){
+      var option = document.createElement('option'),txt=document.createTextNode(cur[i]);
+      option.appendChild(txt);
+      option.setAttribute('value',cur[i]);
+      selCurrency.insertBefore(option,selCurrency.lastChild);
+    };
+
+    allRates.addEventListener('click',getAllRates);
+    requestRate.addEventListener('click',getOneRate);
+
+    function getOneRate(){
+      var curValue = currencyTags.value;
+      let urlPlus = 'crypto/' + curValue;
+      fetch(urlPlus).then(function(response){
+        return response.json();
+      }).then(function(data){
+        console.log(JSON.parse(data[0]));
+      }).catch(function(error){
+        console.log(JSON.stringify(error));
+      });
+      console.log(urlPlus);
+    };
+
+    function outputOneCur(data){
+      console.log(data);
+      let html = '<h1>'+data.name+'</h1>';
+      for(key in data){
+        let keyContent = key.replace("_","").capitalize();
+        let val = data[key];
+        html += '<div>'+keyContent+':'+val+'</div>';
+      }
+      output.innerHTML = html;
+    }
+
+    function getAllRates(){
+      let curValue = selCurrency.value;
+      let url = '/price/'+curValue;
+      fetch(url).then(function(response){
+        return response.json();
+      }).then(function(data){
+        outputToPage(JSON.parse(data),curValue);
+      }).catch(function(error){
+        console.log(JSON.stringify(error));
+      });
+    };
+
+    function outputToPage(data,c){
+      let currencyLower = 'price_'+c.toLowerCase();
+      data.data.forEach(function(item,i){
+        //name,slug,symbol
+        let li = document.createElement('li');
+        let span = document.createElement('span');
+        span.innerHTML = `${item.name} ${item.symbol} ${item.slug}`;
+        li.appendChild(span);
+        output.appendChild(li);
+        console.log(item);
+      });
+    };
+  </script>
+</body>
+</html>
